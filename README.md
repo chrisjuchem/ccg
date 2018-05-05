@@ -1,0 +1,2 @@
+# ccg
+Craftable Card Game
