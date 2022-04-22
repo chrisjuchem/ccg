@@ -1,22 +1,18 @@
 #include <iostream>
-#include <ncurses.h>
-
+#include <vector>
+#include <memory>
+#include "engine/card.hpp"
+#include "render/terminal/terminal.hpp"
 
 int main(int argc, char** argv) {
-    initscr();         /* Start curses mode */
-    refresh();
 
-    WINDOW* win = newwin(10, 10, 0, 0);
-    WINDOW* inner = newwin(8, 8, 1, 1);
-    box(win, 0, 0);
-    wprintw(inner, "Hello World !!!");
-    wrefresh(win);
-    wrefresh(inner);
+    Card* c = new Card("lmnop");
+    Card* c2 = new Card("qrstuv");
+    std::vector<Card*> cs{c, c2};
 
-    getch();            /* Wait for user input */
-    endwin();           /* Start curses mode */
+    auto renderer = std::make_unique<TerminalRenderer>();
+    renderer->render(cs);
 
 
-    std::cout << "Lorem Ipsum!" << std::endl; 
     return 0;
 }
