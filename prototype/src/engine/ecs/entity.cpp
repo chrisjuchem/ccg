@@ -27,7 +27,7 @@ void addComponent(EntityID entityId, std::shared_ptr<Component> component, bool 
     //TODO check entity not already attached to a component
     component->entityId = entityId;
     componentsByEntity.at(entityId)[type] = component;
-    componentsByType.at(type).push_back(component);
+    componentsByType[type].push_back(component);
 }
 
 
