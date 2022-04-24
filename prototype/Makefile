@@ -1,3 +1,5 @@
+DEBUG := -g
+
 HDRS := $(shell find . -name *.hpp)
 SRCS := $(shell find . -name *.cpp)
 
@@ -7,7 +9,7 @@ deps:
 	sudo apt install libncurses5-dev libncursesw5-dev
 
 build: $(SRCS) $(HDRS)
-	g++ $(SRCS) -Isrc -lncurses -o ./ccg
+	g++ -std=c++2a $(DEBUG) $(SRCS) -Isrc -lncurses -o ./ccg
 
 run:
 	./ccg
