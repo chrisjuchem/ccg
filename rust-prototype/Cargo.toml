@@ -1,0 +1,21 @@
+[package]
+name = "ccg"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# TODO remove dynamic for relaese
+# https://bevyengine.org/learn/book/getting-started/setup/#enable-fast-compiles-optional
+bevy = { version = "0.9", features = ["dynamic"] }
+bevy_mod_raycast = {version = "0.7.0", path = "/home/chrisjuchem/bevy_mod_raycast" }
+
+# Enable a small amount of optimization in debug mode
+[profile.dev]
+opt-level = 1
+
+# Enable high optimizations for dependencies (incl. Bevy), but not for our code:
+[profile.dev.package."*"]
+opt-level = 3
+
+[features]
+debug = []
