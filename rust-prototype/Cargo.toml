@@ -7,7 +7,14 @@ edition = "2021"
 # TODO remove dynamic for relaese
 # https://bevyengine.org/learn/book/getting-started/setup/#enable-fast-compiles-optional
 bevy = { version = "0.9", features = ["dynamic"] }
-bevy_mod_raycast = {version = "0.7.0", path = "/home/chrisjuchem/bevy_mod_raycast" }
+#bevy_mod_raycast = {version = "0.7.0", path = "/home/chrisjuchem/bevy_mod_raycast" }
+bevy_text_mesh = {version = "0.5.0", path = "/home/chrisjuchem/bevy_text_mesh"}
+
+[dependencies.bevy_mod_picking]
+path = "/home/chrisjuchem/bevy_mod_picking"
+default-features = false
+features = [ "backend_raycast", "selection" ]
+#other_features = [ "debug", "highlight", "backend_bevi_ui"]
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]

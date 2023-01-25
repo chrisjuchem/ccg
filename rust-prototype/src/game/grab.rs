@@ -1,56 +1,35 @@
-use bevy::ecs::schedule::ShouldRun;
 use bevy::prelude::*;
-use bevy_mod_raycast::{
-    DefaultPluginState, DefaultRaycastingPlugin, Intersection, RaycastMesh, RaycastMethod,
-    RaycastSource, RaycastSystem,
+use bevy_mod_picking::prelude::{
+    backends::raycast::{PickRaycastSource, PickRaycastTarget},
+    *,
 };
+
+#[derive(Component)]
+pub struct RootEntity(Entity);
+
+#[derive(Bundle)]
+pub struct Grabbable {
+    pickable: PickableBundle,       // <- Makes the mesh pickable.
+    raycastable: PickRaycastTarget, // <- Needed for the raycast backend.
+    root_ent: RootEntity,
+}
+impl Grabbable {
+    pub fn new(root: Entity) -> Self {
+        Self {
+            pickable: PickableBundle::default(),
+            raycastable: PickRaycastTarget::default(),
+            root_ent: RootEntity(root),
+        }
+    }
+}
 
 pub struct GrabPlugin;
 impl Plugin for GrabPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(DefaultRaycastingPlugin::<GrabRaycastSet>::default())
+        app.add_plugins(DefaultPickingPlugins)
             .add_startup_system_to_stage(StartupStage::PostStartup, setup_grab)
-            .add_system_set_to_stage(
-                CoreStage::First,
-                SystemSet::new()
-                    .with_system(cache_cursor_pos.label(GrabLabel::Cursor))
-                    .with_system(
-                        set_ray_source
-                            .after(GrabLabel::Cursor)
-                            .before(RaycastSystem::BuildRays::<GrabRaycastSet>), // .with_run_criteria(clicked),
-                    ),
-            )
-            .add_system(grab.label(GrabLabel::Pickup))
-            .add_system(move_held.label(GrabLabel::Move).after(GrabLabel::Pickup))
-            .add_system(drop.label(GrabLabel::Drop).after(GrabLabel::Move))
-            .init_resource::<CursorPos>();
-
-        // app.add_system(test);
+            .add_system(drag);
     }
-}
-
-pub struct GrabRaycastSet;
-
-pub type Grabbable = RaycastMesh<GrabRaycastSet>;
-#[derive(Component)]
-pub struct Grabbed {
-    start: Vec3,
-    cursor_start: Vec3,
-}
-type GrabRaycastSource = RaycastSource<GrabRaycastSet>;
-
-#[derive(Resource, Default)]
-struct CursorPos {
-    pos: Option<Vec2>,
-    world_pos: Option<Vec3>,
-}
-
-#[derive(SystemLabel)]
-enum GrabLabel {
-    Cursor,
-    Pickup,
-    Move,
-    Drop,
 }
 
 fn setup_grab(mut commands: Commands, camera: Query<Entity, With<Camera>>) {
@@ -58,77 +37,57 @@ fn setup_grab(mut commands: Commands, camera: Query<Entity, With<Camera>>) {
     commands
         .get_entity(camera.single())
         .unwrap()
-        .insert(GrabRaycastSource::new());
-
-    // commands.insert_resource(DefaultPluginState::<GrabRaycastSet>::default().with_debug_cursor());
+        .insert(PickRaycastSource::default());
 }
 
-fn cache_cursor_pos(
+// modified from https://github.com/aevyrie/bevy_mod_picking/blob/beta/examples/drag_and_drop.rs
+#[allow(clippy::too_many_arguments)]
+fn drag(
+    mut commands: Commands,
+    // Pointer Events
+    mut drag_start_events: EventReader<PointerDragStart>,
+    mut drag_events: EventReader<PointerDrag>,
+    mut drag_end_events: EventReader<PointerDragEnd>,
+    // Inputs
+    pointers: Res<PointerMap>,
     windows: Res<Windows>,
-    mut cursor: ResMut<CursorPos>,
-    camera: Query<(&Camera, &GlobalTransform)>,
+    images: Res<Assets<Image>>,
+    locations: Query<&PointerLocation>,
+    // Outputs
+    mut objects: Query<(Entity, &mut Transform)>,
+    grabbables: Query<(Entity, &RootEntity)>,
 ) {
-    // let window = if let RenderTarget::Window(id) = camera.target {
-    //     windows.get(id).unwrap()
-    // } else {
-    //     windows.get_primary().unwrap()
-    // };
-
-    let cursor_pos = windows.get_primary().unwrap().cursor_position();
-    cursor.pos = cursor_pos;
-    cursor.world_pos = camera.get_single().ok().and_then(|(cam, trans)| {
-        cursor_pos.and_then(|pos| cam.viewport_to_world(trans, pos).map(|ray| ray.origin))
-    })
-}
-
-fn set_ray_source(
-    mut source_obj: Query<&mut GrabRaycastSource>,
-    cursor: Res<CursorPos>,
-    click: Res<Input<MouseButton>>,
-) {
-    let mut source = match source_obj.get_single_mut() {
-        Ok(src) => src,
-        Err(_) => return,
-    };
-
-    if click.just_pressed(MouseButton::Left) && cursor.pos.is_some() {
-        source.enabled = true;
-        source.cast_method = RaycastMethod::Screenspace(cursor.pos.unwrap());
-    } else {
-        source.enabled = false;
+    // When we start dragging a square, we need to change the focus policy so that picking passes
+    // through it. Because the square will be locked to the cursor, it will block the pointer and we
+    // won't be able to tell what we are dropping it onto unless we do this.
+    for drag_start in drag_start_events.iter() {
+        let (entity, _) = grabbables.get(drag_start.target()).unwrap();
+        commands.entity(entity).remove::<PickRaycastTarget>();
     }
-}
 
-fn grab(
-    ints: Query<(&Transform, Entity), (With<Intersection<GrabRaycastSet>>, Without<Grabbed>)>,
-    mut commands: Commands,
-    cursor: Res<CursorPos>,
-) {
-    for (t, e) in &ints {
-        commands.entity(e).insert(Grabbed {
-            start: t.translation,
-            cursor_start: cursor.world_pos.unwrap(),
-        });
+    // While being dragged, update the position of the square to be under the pointer.
+    for dragging in drag_events.iter() {
+        let pointer_entity = pointers.get_entity(dragging.pointer_id()).unwrap();
+        let pointer_location = locations.get(pointer_entity).unwrap().location().unwrap();
+        let pointer_position = pointer_location.position;
+        let target = pointer_location
+            .target
+            .get_render_target_info(&windows, &images)
+            .unwrap();
+        let target_size = target.physical_size.as_vec2() / target.scale_factor as f32;
+
+        let (_, root) = grabbables.get(dragging.target()).unwrap();
+        let (_, mut obj_transform) = objects.get_mut(root.0).unwrap();
+        let z = obj_transform.translation.z;
+
+        let cood_fudge = target_size.y / 20.; // TODO: not magic number world FixedVertical height
+        obj_transform.translation =
+            ((pointer_position - (target_size / 2.0)) / cood_fudge).extend(z);
     }
-}
 
-fn drop(
-    input: Res<Input<MouseButton>>,
-    held: Query<Entity, With<Grabbed>>,
-    mut commands: Commands,
-) {
-    if input.just_released(MouseButton::Left) {
-        for e in &held {
-            commands.entity(e).remove::<Grabbed>();
-        }
-    }
-}
-
-fn move_held(mut held: Query<(&Grabbed, &mut Transform)>, cursor: Res<CursorPos>) {
-    if let Some(pos) = cursor.world_pos {
-        for (g, mut t) in &mut held {
-            t.translation = g.start + pos - g.cursor_start;
-            // println!("{} {} {}", t.translation, g.start, pos - g.cursor_start)
-        }
+    // Add focus back
+    for drag_end in drag_end_events.iter() {
+        let (entity, _) = grabbables.get(drag_end.target()).unwrap();
+        commands.entity(entity).insert(PickRaycastTarget::default());
     }
 }

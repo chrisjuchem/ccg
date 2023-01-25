@@ -8,22 +8,22 @@ impl Zone for Battlefield {}
 
 //========
 
-struct Cost {
-    mana: u8,
+pub struct Cost {
+    pub mana: u8,
 }
 
-struct Card {
-    cost: Cost,
-    abilities: Vec<Ability>,
-    stats: Stats,
+pub struct CardProto {
+    pub cost: Cost,
+    pub abilities: Vec<Ability>,
+    pub stats: Stats,
 }
 
-struct Stats {
-    attack: u8,
-    max_health: u8,
+pub struct Stats {
+    pub attack: u8,
+    pub max_health: u8,
 }
 
-enum Ability {
+pub enum Ability {
     Static {
         effect: StaticEffect,
     },
@@ -44,24 +44,24 @@ enum Ability {
     },
 }
 
-enum Trigger {
+pub enum Trigger {
     Timing(Timing),
     Event {/*...*/},
 }
 
-enum StaticEffect {
+pub enum StaticEffect {
     StatChange {
         attack: i8,
         health: i8,
         affects: CreatureTarget,
     },
 }
-enum InstantEffect {
+pub enum InstantEffect {
     Damage { amount: usize, target: Target },
     // Temporary effect
 }
 
-enum Target {
+pub enum Target {
     Creatures(CreatureTarget),
     Players(PlayerTarget),
     CreaturesAndPlayers {
@@ -69,25 +69,25 @@ enum Target {
         players: PlayerTarget,
     },
 }
-struct CreatureTarget {
-    owner: Ownership,
+pub struct CreatureTarget {
+    pub owner: Ownership,
     // filter:
 }
-struct PlayerTarget {
-    owner: Ownership,
+pub struct PlayerTarget {
+    pub owner: Ownership,
     // filter:
 }
 
-enum Ownership {
+pub enum Ownership {
     Any,
     You,
     Opponent,
 }
 
-struct Timing {
-    phase: Phase,
+pub struct Timing {
+    pub phase: Phase,
 }
-enum Phase {
+pub enum Phase {
     Upkeep,
     EoT,
 }
