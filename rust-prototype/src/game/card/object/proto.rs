@@ -8,21 +8,25 @@ impl Zone for Battlefield {}
 
 //========
 
+#[derive(Clone)]
 pub struct Cost {
     pub mana: u8,
 }
 
+#[derive(Clone)]
 pub struct CardProto {
     pub cost: Cost,
     pub abilities: Vec<Ability>,
     pub stats: Stats,
 }
 
+#[derive(Clone)]
 pub struct Stats {
     pub attack: u8,
     pub max_health: u8,
 }
 
+#[derive(Clone)]
 pub enum Ability {
     Static {
         effect: StaticEffect,
@@ -44,11 +48,13 @@ pub enum Ability {
     },
 }
 
+#[derive(Clone)]
 pub enum Trigger {
     Timing(Timing),
     Event {/*...*/},
 }
 
+#[derive(Clone)]
 pub enum StaticEffect {
     StatChange {
         attack: i8,
@@ -56,11 +62,13 @@ pub enum StaticEffect {
         affects: CreatureTarget,
     },
 }
+#[derive(Clone)]
 pub enum InstantEffect {
     Damage { amount: usize, target: Target },
     // Temporary effect
 }
 
+#[derive(Clone)]
 pub enum Target {
     Creatures(CreatureTarget),
     Players(PlayerTarget),
@@ -69,24 +77,29 @@ pub enum Target {
         players: PlayerTarget,
     },
 }
+#[derive(Clone)]
 pub struct CreatureTarget {
     pub owner: Ownership,
     // filter:
 }
+#[derive(Clone)]
 pub struct PlayerTarget {
     pub owner: Ownership,
     // filter:
 }
 
+#[derive(Clone)]
 pub enum Ownership {
     Any,
     You,
     Opponent,
 }
 
+#[derive(Clone)]
 pub struct Timing {
     pub phase: Phase,
 }
+#[derive(Clone)]
 pub enum Phase {
     Upkeep,
     EoT,

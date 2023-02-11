@@ -1,4 +1,5 @@
 use crate::game::card::object::proto::CardProto;
+use crate::game::card::object::zone::{InZone, Zone};
 use crate::game::card::object::Card;
 use crate::game::grab::Grabbable;
 use bevy::ecs::system::SystemParam;
@@ -21,8 +22,12 @@ pub struct CardSpawner<'w, 's> {
 }
 
 impl<'w, 's> CardSpawner<'w, 's> {
-    pub fn spawn(&mut self, proto: CardProto) -> Entity {
+    pub fn spawn(&mut self, proto: CardProto, zone: Zone) -> Entity {
         let mut root = self.commands.spawn((
+            InZone {
+                zone,
+                rel_order: proto.cost.mana.clone() as i16,
+            },
             Card { proto },
             SpatialBundle {
                 transform: Transform::from_xyz(0.0, 0.0, 0.5),
