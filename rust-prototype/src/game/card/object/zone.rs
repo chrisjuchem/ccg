@@ -48,7 +48,7 @@ pub fn arrange_hand(
         .0
         .values()
         .fold(HashSet::<Entity>::new(), |mut a, b| {
-            a.extend(b);
+            a.extend(b.keys());
             a
         });
 

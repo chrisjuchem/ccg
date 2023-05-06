@@ -29,7 +29,7 @@ fn init_objects(
 ) {
     // table
     commands.spawn(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Plane { size: 19.0 })),
+        mesh: meshes.add(Mesh::from(shape::Plane::from_size(19.0))),
         material: materials.add(StandardMaterial {
             perceptual_roughness: 0.9,
             ..Color::rgb(0.3, 0.5, 0.3).into()
@@ -61,10 +61,16 @@ fn init_camera(mut commands: Commands) {
         camera: Default::default(),
         // projection: Projection::Perspective(PerspectiveProjection::default()),
         projection: Projection::Orthographic(OrthographicProjection {
-            left: -160. / 9.,
-            right: 160. / 9.,
-            bottom: 10.,
-            top: -10.,
+            area: Rect {
+                min: Vec2 {
+                    x: -160. / 9.,
+                    y: 10.0,
+                },
+                max: Vec2 {
+                    x: 160. / 9.,
+                    y: 10.0,
+                },
+            },
             scaling_mode: ScalingMode::FixedVertical(20.),
             near: 0.,
             far: 20.1,

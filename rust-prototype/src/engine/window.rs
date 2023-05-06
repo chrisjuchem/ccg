@@ -3,27 +3,28 @@ use bevy::window::*;
 
 pub fn window_settings() -> WindowPlugin {
     WindowPlugin {
-        window: WindowDescriptor {
-            width: 1280.,
-            height: 720.,
-            position: WindowPosition::Centered,
-            monitor: MonitorSelection::Index(0), // TODO MonitorSelection::Current/Primary
-            resize_constraints: WindowResizeConstraints::default(),
-            scale_factor_override: None,
-            title: "ccg".into(),
+        primary_window: Some(Window {
+            cursor: Default::default(),
             present_mode: PresentMode::AutoVsync,
+            mode: WindowMode::Windowed,
+            position: WindowPosition::Centered(MonitorSelection::Index(0)),
+            resolution: WindowResolution::new(1280., 720.),
+            title: "ccg".into(),
+            composite_alpha_mode: Default::default(),
+            resize_constraints: WindowResizeConstraints::default(),
             resizable: true,
             decorations: true,
-            cursor_visible: true,
-            cursor_grab_mode: CursorGrabMode::None,
-            mode: WindowMode::Windowed,
             transparent: true,
+            focused: false,
+            window_level: WindowLevel::Normal,
             canvas: None,
             fit_canvas_to_parent: false,
-            alpha_mode: CompositeAlphaMode::Auto,
-        },
-        add_primary_window: true,
-        exit_on_all_closed: true,
+            prevent_default_event_handling: false,
+            internal: Default::default(),
+            ime_enabled: false,
+            ime_position: Default::default(),
+        }),
+        exit_condition: ExitCondition::OnPrimaryClosed,
         close_when_requested: true,
     }
 }
@@ -42,12 +43,15 @@ impl Plugin for WindowUtilPlugin {
 //     commands.spawn(Camera2dBundle::default());
 // }
 
-fn f_toggle_fullscreen(input: Res<Input<KeyCode>>, mut windows: ResMut<Windows>) {
-    let window = windows.primary_mut();
+fn f_toggle_fullscreen(
+    input: Res<Input<KeyCode>>,
+    mut windows: Query<&mut Window, With<PrimaryWindow>>,
+) {
+    let mut window = windows.single_mut();
     if input.just_pressed(KeyCode::F) {
-        window.set_mode(match window.mode() {
+        window.mode = match window.mode {
             WindowMode::Windowed => WindowMode::BorderlessFullscreen,
             _ => WindowMode::Windowed,
-        })
+        }
     }
 }

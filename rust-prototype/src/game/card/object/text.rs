@@ -18,7 +18,6 @@ pub fn update_text_meshes(cards: Query<&Card>, mut meshes: Query<(&mut TextMesh,
 
         let new_text = card.text();
         if mesh.as_ref().text != new_text {
-            println!("ba");
             mesh.text = new_text
         }
     }

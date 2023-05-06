@@ -1,9 +1,10 @@
 use crate::game::card::object::proto::CardProto;
 use crate::game::card::object::zone::{InZone, Zone};
 use crate::game::card::object::Card;
-use crate::game::grab::Grabbable;
+use crate::game::grab::{Draggable, Grabbable};
 use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
+use bevy_mod_picking::prelude::{Bubble, Drop, ListenedEvent, OnPointer};
 use bevy_text_mesh::prelude::*;
 
 #[derive(Resource)]
@@ -33,6 +34,7 @@ impl<'w, 's> CardSpawner<'w, 's> {
                 transform: Transform::from_xyz(0.0, 0.0, 0.5),
                 ..default()
             },
+            Draggable::new(),
         ));
         let root_id = root.id();
 
