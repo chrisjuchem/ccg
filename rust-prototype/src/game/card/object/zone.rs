@@ -1,3 +1,4 @@
+use crate::game::grab::Hovered;
 use bevy::prelude::*;
 use bevy::utils::hashbrown::HashSet;
 use bevy_mod_picking::focus::HoverMap;
@@ -18,49 +19,40 @@ pub struct InZone {
     pub rel_order: i16,
 }
 
-pub fn arrange_hand(
-    mut all_cards: Query<(&InZone, &mut Transform, Entity)>,
-    hover_map: Res<HoverMap>,
-) {
+pub fn arrange_hand(mut all_cards: Query<(&InZone, &mut Transform, Entity, Option<&Hovered>)>) {
     let mut cards: Vec<_> = all_cards
         .iter_mut()
-        .filter(|(z, _t, _e)| z.zone == Zone::Hand) // todo filter ownership
+        .filter(|(z, _t, _e, _h)| z.zone == Zone::Hand) // todo filter ownership
         .collect();
-    cards.sort_by(|(z1, _, _), (z2, _, _)| match z1.rel_order - z1.rel_order {
-        0 => Ordering::Equal,
-        x if x > 0 => Ordering::Greater,
-        _ => Ordering::Less,
-    });
+    cards.sort_by(
+        |(z1, _, _, _), (z2, _, _, _)| match z1.rel_order - z2.rel_order {
+            0 => Ordering::Equal,
+            x if x > 0 => Ordering::Greater,
+            _ => Ordering::Less,
+        },
+    );
 
-    let spacing = 2.;
-    let mut next_pos = Vec3 {
-        x: -spacing / 2. * (cards.len() - 1) as f32,
-        y: -4.,
-        z: 6.,
-    };
-    let mut offset = Vec3 {
-        x: spacing,
-        y: 0.,
-        z: 0.8,
-    };
+    let z = 6.;
+    let base_pt = Vec3::new(0., -30., z);
+    let mut base_tf = Transform::from_xyz(0., -8., z);
+    let angle = 0.5; //radians
+    let n = cards.len() as f32;
 
-    let hovered = hover_map
-        .0
-        .values()
-        .fold(HashSet::<Entity>::new(), |mut a, b| {
-            a.extend(b.keys());
-            a
-        });
+    let mut i = 0;
+    for (_z, mut t, e, h) in cards.into_iter() {
+        base_tf.translation.z -= 0.2;
+        *t = base_tf.clone();
+        t.rotate_around(
+            base_pt,
+            Quat::from_rotation_z(angle * ((i as f32 / (1. - n)) + 0.5)),
+        );
+        t.scale = Vec3::new(1., 1., 1.);
+        i += 1;
 
-    for (_z, mut t, e) in cards.into_iter() {
-        t.translation = next_pos.clone();
-
-        // dbg!(&hovered);
-        // dbg!(&e);
-        if hovered.contains(&e) {
-            println!("flip!");
-            offset.z *= -1.;
+        if h.is_some() {
+            t.scale *= 1.2;
+            let offset = (t.translation - base_pt).normalize() + Vec3::new(0., 0., 0.5);
+            t.translation += offset;
         }
-        next_pos += offset
     }
 }

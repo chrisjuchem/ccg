@@ -20,18 +20,23 @@ impl Grabbable {
     }
 }
 
+#[derive(Component, Clone, Debug)]
+pub struct Hovered;
+
 #[derive(Bundle)]
 pub struct Draggable {
-    drag_start: OnPointer<DragStart>,
+    // drag_start: OnPointer<DragStart>,
     drag: OnPointer<Drag>,
-    drag_end: OnPointer<DragEnd>,
+    // drag_end: OnPointer<DragEnd>,
     // drop: OnPointer<Drop>,
+    hover_start: OnPointer<Over>,
+    hover_end: OnPointer<Out>,
 }
 
 impl Draggable {
     pub fn new() -> Self {
         Self {
-            drag_start: OnPointer::<DragStart>::target_remove::<Pickable>(),
+            // drag_start: OnPointer::<DragStart>::target_remove::<Pickable>(),
             drag: OnPointer::<Drag>::run_callback(
                 |In(drag): In<ListenedEvent<Drag>>,
                  pointer_utils: PointerUtils,
@@ -42,8 +47,10 @@ impl Draggable {
                     Bubble::Up
                 },
             ),
-            drag_end: OnPointer::<DragEnd>::target_insert(Pickable),
+            // drag_end: OnPointer::<DragEnd>::target_insert(Pickable),
             // drop: drop_handler,
+            hover_start: OnPointer::<Over>::listener_insert(Hovered),
+            hover_end: OnPointer::<Out>::listener_remove::<Hovered>(),
         }
     }
 }
@@ -132,5 +139,34 @@ impl PointerUtils<'_, '_> {
         let target_size = target.physical_size.as_vec2() / target.scale_factor as f32;
 
         target_size.y / 20. // TODO: not magic number world FixedVertical height
+    }
+}
+
+//=========
+
+trait OnPointerExt<E: IsPointerEvent> {
+    fn listener_insert(bundle: impl Bundle + Clone) -> Self;
+    fn listener_remove<B: Bundle>() -> Self;
+}
+
+impl<E: IsPointerEvent> OnPointerExt<E> for OnPointer<E> {
+    fn listener_insert(bundle: impl Bundle + Clone) -> Self {
+        Self::run_callback(
+            move |In(event): In<ListenedEvent<E>>, mut commands: Commands| {
+                let bundle = bundle.clone();
+                commands.entity(event.listener).insert(bundle);
+                Bubble::Up
+            },
+        )
+    }
+
+    /// Remove a bundle from the target entity any time this event listener is triggered.
+    fn listener_remove<B: Bundle>() -> Self {
+        Self::run_callback(
+            move |In(event): In<ListenedEvent<E>>, mut commands: Commands| {
+                commands.entity(event.listener).remove::<B>();
+                Bubble::Up
+            },
+        )
     }
 }
