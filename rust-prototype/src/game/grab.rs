@@ -1,3 +1,5 @@
+use crate::game::card::object::zone::{InZone, Zone};
+use crate::game::card::object::Card;
 use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
 use bevy_mod_picking::pointer::Location;
@@ -22,12 +24,15 @@ impl Grabbable {
 
 #[derive(Component, Clone, Debug)]
 pub struct Hovered;
+#[derive(Component, Clone, Debug)]
+pub struct Dragged;
 
 #[derive(Bundle)]
 pub struct Draggable {
-    // drag_start: OnPointer<DragStart>,
+    drag_start: OnPointer<DragStart>,
+    // drag_start2: OnPointer<DragStart>,
     drag: OnPointer<Drag>,
-    // drag_end: OnPointer<DragEnd>,
+    drag_end: OnPointer<DragEnd>,
     // drop: OnPointer<Drop>,
     hover_start: OnPointer<Over>,
     hover_end: OnPointer<Out>,
@@ -36,8 +41,16 @@ pub struct Draggable {
 impl Draggable {
     pub fn new() -> Self {
         Self {
-            // drag_start: OnPointer::<DragStart>::target_remove::<Pickable>(),
-            drag: OnPointer::<Drag>::run_callback(
+            drag_start: OnPointer::commands_mut(|drag, commands| {
+                commands.get_entity(drag.listener).unwrap().insert(Dragged);
+                commands
+                    .get_entity(drag.target)
+                    .unwrap()
+                    .remove::<Pickable>();
+            }),
+
+            // drag_start2: OnPointer::<DragStart>::target_remove::<Pickable>(),
+            drag: OnPointer::run_callback(
                 |In(drag): In<ListenedEvent<Drag>>,
                  pointer_utils: PointerUtils,
                  mut transforms: Query<&mut Transform>| {
@@ -47,10 +60,16 @@ impl Draggable {
                     Bubble::Up
                 },
             ),
-            // drag_end: OnPointer::<DragEnd>::target_insert(Pickable),
+            drag_end: OnPointer::commands_mut(|drag, commands| {
+                commands
+                    .get_entity(drag.listener)
+                    .unwrap()
+                    .remove::<Dragged>();
+                commands.get_entity(drag.target).unwrap().insert(Pickable);
+            }),
             // drop: drop_handler,
-            hover_start: OnPointer::<Over>::listener_insert(Hovered),
-            hover_end: OnPointer::<Out>::listener_remove::<Hovered>(),
+            hover_start: OnPointer::listener_insert(Hovered),
+            hover_end: OnPointer::listener_remove::<Hovered>(),
         }
     }
 }
@@ -72,58 +91,6 @@ fn setup_grab(mut commands: Commands, camera: Query<Entity, With<Camera>>) {
         .insert(RaycastPickCamera::default());
 }
 
-// // modified from https://github.com/aevyrie/bevy_mod_picking/blob/beta/examples/drag_and_drop.rs
-// #[allow(clippy::too_many_arguments)]
-// fn drag(
-//     mut commands: Commands,
-//     // Pointer Events
-//     mut drag_start_events: EventReader<PointerDragStart>,
-//     mut drag_events: EventReader<PointerDrag>,
-//     mut drag_end_events: EventReader<PointerDragEnd>,
-//     // Inputs
-//     pointers: Res<PointerMap>,
-//     windows: Res<Windows>,
-//     images: Res<Assets<Image>>,
-//     locations: Query<&PointerLocation>,
-//     // Outputs
-//     mut objects: Query<(Entity, &mut Transform)>,
-//     grabbables: Query<(Entity, &RootEntity)>,
-// ) {
-//     // When we start dragging a square, we need to change the focus policy so that picking passes
-//     // through it. Because the square will be locked to the cursor, it will block the pointer and we
-//     // won't be able to tell what we are dropping it onto unless we do this.
-//     for drag_start in drag_start_events.iter() {
-//         let (entity, _) = grabbables.get(drag_start.target()).unwrap();
-//         commands.entity(entity).remove::<RaycastPickTarget>();
-//     }
-//
-//     // While being dragged, update the position of the square to be under the pointer.
-//     for dragging in drag_events.iter() {
-//         let pointer_entity = pointers.get_entity(dragging.pointer_id()).unwrap();
-//         let pointer_location = locations.get(pointer_entity).unwrap().location().unwrap();
-//         let pointer_position = pointer_location.position;
-//         let target = pointer_location
-//             .target
-//             .get_render_target_info(&windows, &images)
-//             .unwrap();
-//         let target_size = target.physical_size.as_vec2() / target.scale_factor as f32;
-//
-//         let (_, root) = grabbables.get(dragging.target()).unwrap();
-//         let (_, mut obj_transform) = objects.get_mut(root.0).unwrap();
-//         let z = obj_transform.translation.z;
-//
-//         let cood_fudge = target_size.y / 20.; // TODO: not magic number world FixedVertical height
-//         obj_transform.translation =
-//             ((pointer_position - (target_size / 2.0)) / cood_fudge).extend(z);
-//     }
-//
-//     // Add focus back
-//     for drag_end in drag_end_events.iter() {
-//         let (entity, _) = grabbables.get(drag_end.target()).unwrap();
-//         commands.entity(entity).insert(RaycastPickTarget::default());
-//     }
-// }
-
 #[derive(SystemParam)]
 struct PointerUtils<'w, 's> {
     windows: Query<'w, 's, (Entity, &'static Window)>,
@@ -142,14 +109,53 @@ impl PointerUtils<'_, '_> {
     }
 }
 
+pub fn battlefield_drop_handler(
+    In(event): In<ListenedEvent<Drop>>,
+    parents: Query<&Parent>,
+    mut cards: Query<(&Card, &mut InZone)>,
+) -> Bubble {
+    let parent = parents.get(event.dropped).unwrap().get();
+    let (card, mut zone) = cards.get_mut(parent).unwrap();
+    zone.zone = Zone::Battlefield;
+    Bubble::Up
+}
+
 //=========
 
-trait OnPointerExt<E: IsPointerEvent> {
+trait OnPointerExt<E: IsPointerEvent + Sync> {
+    // should take `OnPointer`s, :'(
+    fn run_callbacks<const N: usize, M, CB: IntoSystem<ListenedEvent<E>, Bubble, M> + Send + Sync>(
+        callbacks: [CB; N],
+    ) -> Self;
+
     fn listener_insert(bundle: impl Bundle + Clone) -> Self;
     fn listener_remove<B: Bundle>() -> Self;
 }
 
-impl<E: IsPointerEvent> OnPointerExt<E> for OnPointer<E> {
+impl<E: IsPointerEvent + Sync> OnPointerExt<E> for OnPointer<E> {
+    fn run_callbacks<
+        const N: usize,
+        M,
+        CB: IntoSystem<ListenedEvent<E>, Bubble, M> + Send + Sync,
+    >(
+        callbacks: [CB; N],
+    ) -> Self {
+        let mut cbs = callbacks
+            .into_iter()
+            .map(|cb| IntoSystem::into_system(cb))
+            .collect::<Vec<_>>();
+        Self::run_callback(move |In(event): In<ListenedEvent<E>>, world: &mut World| {
+            let mut ret = Bubble::Up;
+            for cb in cbs.iter_mut() {
+                match cb.run(event.clone(), world) {
+                    Bubble::Burst => ret = Bubble::Burst,
+                    _ => (),
+                }
+            }
+            ret
+        })
+    }
+
     fn listener_insert(bundle: impl Bundle + Clone) -> Self {
         Self::run_callback(
             move |In(event): In<ListenedEvent<E>>, mut commands: Commands| {

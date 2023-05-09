@@ -36,9 +36,9 @@ fn testing_cards(mut spawner: CardSpawner) {
     card.cost.mana += 1;
     spawner.spawn(card.clone(), Zone::Hand);
     card.cost.mana += 1;
-    spawner.spawn(card.clone(), Zone::Battlefield);
+    spawner.spawn(card.clone(), Zone::Hand);
     card.cost.mana += 1;
-    spawner.spawn(card.clone(), Zone::Battlefield);
+    spawner.spawn(card.clone(), Zone::Hand);
     card.cost.mana += 1;
-    spawner.spawn(card.clone(), Zone::Battlefield);
+    spawner.spawn(card.clone(), Zone::Hand);
 }

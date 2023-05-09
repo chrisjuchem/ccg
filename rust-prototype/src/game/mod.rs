@@ -1,11 +1,13 @@
 use bevy::prelude::*;
 use bevy::render::camera::{RenderTarget, ScalingMode};
+use bevy_mod_picking::prelude::{Drop, OnPointer, RaycastPickTarget};
 use bevy_text_mesh::TextMeshPlugin;
 
 mod grab;
 use grab::{GrabPlugin, Grabbable};
 
 mod card;
+use crate::game::grab::battlefield_drop_handler;
 use card::CardPlugin;
 
 pub struct GamePlugin;
@@ -35,10 +37,27 @@ fn init_objects(
             ..Color::rgb(0.3, 0.5, 0.3).into()
         }),
         transform: Transform::from_xyz(0., 0., 0.)
-            .looking_at(Vec3::Y, Vec3::Z)
+            .looking_to(Vec3::Y, Vec3::Z)
             .with_scale(Vec3::new(1.6 / 0.9, 1., 1.)),
         ..default()
     });
+
+    // battlefield
+    commands.spawn((
+        PbrBundle {
+            mesh: meshes.add(Mesh::from(shape::Plane::from_size(10.0))),
+            material: materials.add(StandardMaterial {
+                perceptual_roughness: 0.9,
+                ..Color::rgb(0.8, 0.6, 0.3).into()
+            }),
+            transform: Transform::from_xyz(0., 0., 0.01)
+                .looking_to(Vec3::Y, Vec3::Z)
+                .with_scale(Vec3::new((1.6 / 0.9) * (19. / 10.), 1., 1.)),
+            ..default()
+        },
+        OnPointer::<Drop>::run_callback(battlefield_drop_handler),
+        RaycastPickTarget::default(),
+    ));
 
     // light
     commands.spawn(DirectionalLightBundle {
@@ -64,7 +83,7 @@ fn init_camera(mut commands: Commands) {
             area: Rect {
                 min: Vec2 {
                     x: -160. / 9.,
-                    y: 10.0,
+                    y: -10.0,
                 },
                 max: Vec2 {
                     x: 160. / 9.,

@@ -1,4 +1,4 @@
-use crate::game::grab::Hovered;
+use crate::game::grab::{Dragged, Hovered};
 use bevy::prelude::*;
 use bevy::utils::hashbrown::HashSet;
 use bevy_mod_picking::focus::HoverMap;
@@ -19,7 +19,9 @@ pub struct InZone {
     pub rel_order: i16,
 }
 
-pub fn arrange_hand(mut all_cards: Query<(&InZone, &mut Transform, Entity, Option<&Hovered>)>) {
+pub fn arrange_hand(
+    mut all_cards: Query<(&InZone, &mut Transform, Option<&Hovered>, Option<&Dragged>)>,
+) {
     let mut cards: Vec<_> = all_cards
         .iter_mut()
         .filter(|(z, _t, _e, _h)| z.zone == Zone::Hand) // todo filter ownership
@@ -39,19 +41,25 @@ pub fn arrange_hand(mut all_cards: Query<(&InZone, &mut Transform, Entity, Optio
     let n = cards.len() as f32;
 
     let mut i = 0;
-    for (_z, mut t, e, h) in cards.into_iter() {
-        base_tf.translation.z -= 0.2;
-        *t = base_tf.clone();
-        t.rotate_around(
-            base_pt,
-            Quat::from_rotation_z(angle * ((i as f32 / (1. - n)) + 0.5)),
-        );
-        t.scale = Vec3::new(1., 1., 1.);
+    for (_z, mut t, h, d) in cards.into_iter() {
         i += 1;
+        if d.is_some() {
+            continue;
+        }
+
+        base_tf.translation.z -= 0.1;
+        *t = base_tf.clone();
+        let idx = if n > 1. {
+            (((i - 1) as f32 / (1. - n)) + 0.5)
+        } else {
+            0.
+        };
+        t.rotate_around(base_pt, Quat::from_rotation_z(angle * idx));
+        t.scale = Vec3::new(1., 1., 1.);
 
         if h.is_some() {
             t.scale *= 1.2;
-            let offset = (t.translation - base_pt).normalize() + Vec3::new(0., 0., 0.5);
+            let offset = (t.translation - base_pt).normalize() + Vec3::new(0., 0., 1.);
             t.translation += offset;
         }
     }
