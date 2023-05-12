@@ -1,3 +1,4 @@
+use crate::game::actions::{take_action, Action, ActionParams};
 use crate::game::card::object::zone::{InZone, Zone};
 use crate::game::card::object::Card;
 use bevy::ecs::system::SystemParam;
@@ -112,11 +113,10 @@ impl PointerUtils<'_, '_> {
 pub fn battlefield_drop_handler(
     In(event): In<ListenedEvent<Drop>>,
     parents: Query<&Parent>,
-    mut cards: Query<(&Card, &mut InZone)>,
+    action_params: ActionParams,
 ) -> Bubble {
-    let parent = parents.get(event.dropped).unwrap().get();
-    let (card, mut zone) = cards.get_mut(parent).unwrap();
-    zone.zone = Zone::Battlefield;
+    let card = parents.get(event.dropped).unwrap().get();
+    take_action(Action::PlayCard(card), action_params);
     Bubble::Up
 }
 

@@ -1,3 +1,5 @@
+#![feature(let_else)]
+
 mod engine;
 mod game;
 

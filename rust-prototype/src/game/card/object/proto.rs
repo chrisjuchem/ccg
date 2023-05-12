@@ -1,11 +1,6 @@
 enum CardType {
     Creature,
 }
-
-trait Zone {}
-enum Battlefield {}
-impl Zone for Battlefield {}
-
 //========
 
 #[derive(Clone)]
@@ -81,11 +76,15 @@ pub enum Target {
 pub struct CreatureTarget {
     pub owner: Ownership,
     // filter:
+    // count: N, up to N(??), all
+    // choice: chosen, random
 }
 #[derive(Clone)]
 pub struct PlayerTarget {
     pub owner: Ownership,
     // filter:
+    // count: N, up to N(??), all
+    // choice: chosen, random
 }
 
 #[derive(Clone)]

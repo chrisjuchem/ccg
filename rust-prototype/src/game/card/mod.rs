@@ -1,6 +1,6 @@
 pub mod object;
 
-use crate::game::card::object::zone::{arrange_hand, Zone};
+use crate::game::card::object::zone::{arrange_battlefield, arrange_hand, arrange_stack, Zone};
 use bevy::prelude::*;
 use object::proto::*;
 use object::spawn::{init_card_assets, CardSpawner};
@@ -15,6 +15,8 @@ impl Plugin for CardPlugin {
 
         // todo normal system && detection
         app.add_system(arrange_hand);
+        app.add_system(arrange_stack);
+        app.add_system(arrange_battlefield);
     }
 }
 

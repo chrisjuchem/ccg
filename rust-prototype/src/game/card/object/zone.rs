@@ -9,6 +9,7 @@ pub enum Zone {
     #[default]
     Deck,
     Hand,
+    Stack,
     Battlefield,
 }
 
@@ -62,5 +63,47 @@ pub fn arrange_hand(
             let offset = (t.translation - base_pt).normalize() + Vec3::new(0., 0., 1.);
             t.translation += offset;
         }
+    }
+}
+
+pub fn arrange_stack(mut all_cards: Query<(&InZone, &mut Transform)>) {
+    let mut cards: Vec<_> = all_cards
+        .iter_mut()
+        .filter(|(z, _t)| z.zone == Zone::Stack) // todo filter ownership
+        .collect();
+    cards.sort_by(|(z1, _), (z2, _)| match z1.rel_order - z2.rel_order {
+        0 => Ordering::Equal,
+        x if x > 0 => Ordering::Greater,
+        _ => Ordering::Less,
+    });
+
+    let base_tf = Transform::from_xyz(13., 5., 5.);
+    let mut i = 0;
+    for (_z, mut t) in cards.into_iter() {
+        *t = base_tf.clone();
+        t.translation.x += (i % 2) as f32 * 2.2;
+        t.translation.y -= i as f32 * 2.2;
+        t.translation.z += 0.2 * i as f32;
+        i += 1
+    }
+}
+
+pub fn arrange_battlefield(mut all_cards: Query<(&InZone, &mut Transform)>) {
+    let mut cards: Vec<_> = all_cards
+        .iter_mut()
+        .filter(|(z, _t)| z.zone == Zone::Battlefield) // todo filter ownership
+        .collect();
+    cards.sort_by(|(z1, _), (z2, _)| match z1.rel_order - z2.rel_order {
+        0 => Ordering::Equal,
+        x if x > 0 => Ordering::Greater,
+        _ => Ordering::Less,
+    });
+
+    let base_tf = Transform::from_xyz(-14., 0., 0.5);
+    let mut i: f32 = 0.;
+    for (_z, mut t) in cards.into_iter() {
+        *t = base_tf.clone();
+        t.translation.x += i * 3.5;
+        i += 1.
     }
 }
