@@ -3,6 +3,10 @@ use bevy::prelude::*;
 use bevy::utils::hashbrown::HashSet;
 use bevy_mod_picking::focus::HoverMap;
 use std::cmp::Ordering;
+use std::time::Duration;
+
+#[derive(Component, Deref, DerefMut, Default)]
+pub struct TargetTransform(Transform);
 
 #[derive(Default, Eq, PartialEq, Debug)]
 pub enum Zone {
@@ -21,7 +25,12 @@ pub struct InZone {
 }
 
 pub fn arrange_hand(
-    mut all_cards: Query<(&InZone, &mut Transform, Option<&Hovered>, Option<&Dragged>)>,
+    mut all_cards: Query<(
+        &InZone,
+        &mut TargetTransform,
+        Option<&Hovered>,
+        Option<&Dragged>,
+    )>,
 ) {
     let mut cards: Vec<_> = all_cards
         .iter_mut()
@@ -49,7 +58,7 @@ pub fn arrange_hand(
         }
 
         base_tf.translation.z -= 0.1;
-        *t = base_tf.clone();
+        t.0 = base_tf.clone();
         let idx = if n > 1. {
             (((i - 1) as f32 / (1. - n)) + 0.5)
         } else {
@@ -66,7 +75,7 @@ pub fn arrange_hand(
     }
 }
 
-pub fn arrange_stack(mut all_cards: Query<(&InZone, &mut Transform)>) {
+pub fn arrange_stack(mut all_cards: Query<(&InZone, &mut TargetTransform)>) {
     let mut cards: Vec<_> = all_cards
         .iter_mut()
         .filter(|(z, _t)| z.zone == Zone::Stack) // todo filter ownership
@@ -80,7 +89,7 @@ pub fn arrange_stack(mut all_cards: Query<(&InZone, &mut Transform)>) {
     let base_tf = Transform::from_xyz(13., 5., 5.);
     let mut i = 0;
     for (_z, mut t) in cards.into_iter() {
-        *t = base_tf.clone();
+        t.0 = base_tf.clone();
         t.translation.x += (i % 2) as f32 * 2.2;
         t.translation.y -= i as f32 * 2.2;
         t.translation.z += 0.2 * i as f32;
@@ -88,7 +97,7 @@ pub fn arrange_stack(mut all_cards: Query<(&InZone, &mut Transform)>) {
     }
 }
 
-pub fn arrange_battlefield(mut all_cards: Query<(&InZone, &mut Transform)>) {
+pub fn arrange_battlefield(mut all_cards: Query<(&InZone, &mut TargetTransform)>) {
     let mut cards: Vec<_> = all_cards
         .iter_mut()
         .filter(|(z, _t)| z.zone == Zone::Battlefield) // todo filter ownership
@@ -102,8 +111,16 @@ pub fn arrange_battlefield(mut all_cards: Query<(&InZone, &mut Transform)>) {
     let base_tf = Transform::from_xyz(-14., 0., 0.5);
     let mut i: f32 = 0.;
     for (_z, mut t) in cards.into_iter() {
-        *t = base_tf.clone();
+        t.0 = base_tf.clone();
         t.translation.x += i * 3.5;
         i += 1.
     }
+}
+
+pub fn move_to_target(mut ts: Query<(&mut Transform, &mut TargetTransform)>, time: Res<Time>) {
+    ts.for_each_mut(|(mut trans, target)| {
+        trans.translation = trans.translation.lerp(target.translation, 0.22);
+        trans.rotation = trans.rotation.lerp(target.rotation, 0.1);
+        trans.scale = target.scale.lerp(trans.scale, 0.33)
+    });
 }

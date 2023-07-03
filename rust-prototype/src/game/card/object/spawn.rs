@@ -1,5 +1,5 @@
 use crate::game::card::object::proto::CardProto;
-use crate::game::card::object::zone::{InZone, Zone};
+use crate::game::card::object::zone::{InZone, TargetTransform, Zone};
 use crate::game::card::object::Card;
 use crate::game::grab::{Draggable, Grabbable};
 use bevy::ecs::system::SystemParam;
@@ -34,6 +34,7 @@ impl<'w, 's> CardSpawner<'w, 's> {
                 transform: Transform::from_xyz(0.0, 0.0, 0.5),
                 ..default()
             },
+            TargetTransform::default(),
             Draggable::new(),
         ));
         let root_id = root.id();

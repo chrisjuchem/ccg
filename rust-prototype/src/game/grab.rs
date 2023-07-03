@@ -1,5 +1,5 @@
 use crate::game::actions::{take_action, Action, ActionParams};
-use crate::game::card::object::zone::{InZone, Zone};
+use crate::game::card::object::zone::{InZone, TargetTransform, Zone};
 use crate::game::card::object::Card;
 use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
@@ -54,10 +54,11 @@ impl Draggable {
             drag: OnPointer::run_callback(
                 |In(drag): In<ListenedEvent<Drag>>,
                  pointer_utils: PointerUtils,
-                 mut transforms: Query<&mut Transform>| {
+                 mut transforms: Query<&mut TargetTransform>| {
                     let mut transform = transforms.get_mut(drag.listener).unwrap();
                     transform.translation += drag.delta.extend(0.0)
                         / pointer_utils.scale_movement(drag.pointer_location); //  follow the mouse
+                    transform.rotation = Quat::default();
                     Bubble::Up
                 },
             ),
