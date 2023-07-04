@@ -4,7 +4,6 @@ use crate::game::card::object::Card;
 use crate::game::grab::{Draggable, Grabbable};
 use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
-use bevy_mod_picking::prelude::{Bubble, Drop, ListenedEvent, OnPointer, RaycastPickTarget};
 use bevy_text_mesh::prelude::*;
 
 #[derive(Resource)]
@@ -16,8 +15,8 @@ pub struct CardAssets {
 
 #[derive(SystemParam)]
 pub struct CardSpawner<'w, 's> {
-    materials: Res<'w, Assets<StandardMaterial>>,
-    meshes: Res<'w, Assets<Mesh>>,
+    // materials: Res<'w, Assets<StandardMaterial>>,
+    // meshes: Res<'w, Assets<Mesh>>,
     card_assets: Res<'w, CardAssets>,
     commands: Commands<'w, 's>,
 }

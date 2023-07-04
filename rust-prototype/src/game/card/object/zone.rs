@@ -1,9 +1,6 @@
 use crate::game::grab::{Dragged, Hovered};
 use bevy::prelude::*;
-use bevy::utils::hashbrown::HashSet;
-use bevy_mod_picking::focus::HoverMap;
 use std::cmp::Ordering;
-use std::time::Duration;
 
 #[derive(Component, Deref, DerefMut, Default)]
 pub struct TargetTransform(Transform);
@@ -60,7 +57,7 @@ pub fn arrange_hand(
         base_tf.translation.z -= 0.1;
         t.0 = base_tf.clone();
         let idx = if n > 1. {
-            (((i - 1) as f32 / (1. - n)) + 0.5)
+            ((i - 1) as f32 / (1. - n)) + 0.5
         } else {
             0.
         };
@@ -117,7 +114,7 @@ pub fn arrange_battlefield(mut all_cards: Query<(&InZone, &mut TargetTransform)>
     }
 }
 
-pub fn move_to_target(mut ts: Query<(&mut Transform, &mut TargetTransform)>, time: Res<Time>) {
+pub fn move_to_target(mut ts: Query<(&mut Transform, &mut TargetTransform)>) {
     ts.for_each_mut(|(mut trans, target)| {
         trans.translation = trans.translation.lerp(target.translation, 0.22);
         trans.rotation = trans.rotation.lerp(target.rotation, 0.1);

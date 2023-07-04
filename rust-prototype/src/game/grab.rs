@@ -1,6 +1,5 @@
 use crate::game::actions::{take_action, Action, ActionParams};
-use crate::game::card::object::zone::{InZone, TargetTransform, Zone};
-use crate::game::card::object::Card;
+use crate::game::card::object::zone::TargetTransform;
 use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
 use bevy_mod_picking::pointer::Location;

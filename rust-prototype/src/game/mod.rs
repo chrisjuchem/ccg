@@ -6,11 +6,11 @@ mod state;
 use crate::game::actions::resolve_action;
 use crate::game::state::Stack;
 use bevy::prelude::*;
-use bevy::render::camera::{RenderTarget, ScalingMode};
+use bevy::render::camera::ScalingMode;
 use bevy_mod_picking::prelude::{Drop, OnPointer, RaycastPickTarget};
 use bevy_text_mesh::TextMeshPlugin;
 use card::CardPlugin;
-use grab::{battlefield_drop_handler, GrabPlugin, Grabbable};
+use grab::{battlefield_drop_handler, GrabPlugin};
 
 pub struct GamePlugin;
 impl Plugin for GamePlugin {
