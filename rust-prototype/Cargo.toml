@@ -9,6 +9,7 @@ edition = "2021"
 bevy = { version = "0.10.1", features = ["dynamic_linking"] }
 #bevy_mod_raycast = {version = "0.7.0", path = "/home/chrisjuchem/bevy_mod_raycast" }
 bevy_text_mesh = {version = "0.6.0", path = "/home/chrisjuchem/bevy_text_mesh"}
+bevy_renet = "0.0.8"
 
 [dependencies.bevy_mod_picking]
 version="0.13"
