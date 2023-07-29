@@ -63,24 +63,21 @@ pub fn move_to_next_phase(
     starts.send(event::PhaseStart { phase: *phase });
 }
 
+pub fn needs_setup(mut start: EventReader<event::PhaseStart>) -> bool {
+    start.iter().any(|ev| ev.phase == Phase::Setup)
+}
+
 pub fn do_setup(
-    mut start: EventReader<event::PhaseStart>,
     mut order: ResMut<TurnOrder>,
     mut commands: Commands,
     players: Query<Entity, With<Player>>,
 ) {
-    for _ in start.iter().filter(|ev| ev.phase == Phase::Setup) {
-        let mut first = true;
-        order.0 = players
-            .iter()
-            //.random()
-            .map(|p| {
-                if first {
-                    commands.insert_resource(ActivePlayer(p));
-                    first = false;
-                }
-                p
-            })
-            .collect();
-    }
+    order.0 = players
+        .iter()
+        //.random()
+        .map(|p| {
+            commands.insert_resource(ActivePlayer(p));
+            p
+        })
+        .collect();
 }

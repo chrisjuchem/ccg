@@ -1,12 +1,13 @@
 use crate::engine::phase::{ActivePlayer, Phase, Priority};
 use crate::engine::{Card, Player};
+use crate::game::zone::GameZones;
 use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
 
 #[derive(SystemParam)]
 pub struct PrintArgs<'w, 's> {
     players: Query<'w, 's, (Ref<'static, Player>, Entity)>,
-    cards: Query<'w, 's, Ref<'static, Card>>,
+    cards: Query<'w, 's, Ref<'static, Card<GameZones>>>,
     phase: Res<'w, Phase>,
     priority: Res<'w, Priority>,
     active_player: Option<Res<'w, ActivePlayer>>,
@@ -57,9 +58,16 @@ pub fn print_game(args: PrintArgs) {
     players.for_each(|(p, e)| {
         println!("{}:", p.name);
         println!(
-            "{} HP, {} cards in deck",
+            "{} HP, {} cards in deck, {} cards in hand",
             p.health,
-            cards.iter().filter(|c| c.owner == Some(e)).count()
+            cards
+                .iter()
+                .filter(|c| c.owner == Some(e) && c.zone.unwrap() == GameZones::Deck)
+                .count(),
+            cards
+                .iter()
+                .filter(|c| c.owner == Some(e) && c.zone.unwrap() == GameZones::Hand)
+                .count()
         )
     });
     if let Some(ap) = active_player {

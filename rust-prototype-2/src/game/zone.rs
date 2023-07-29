@@ -1,6 +1,7 @@
 use crate::engine::zone::Zones;
 use bevy::prelude::*;
 
+#[derive(Eq, PartialEq, Copy, Clone)]
 pub enum GameZones {
     Deck,
     Hand,
