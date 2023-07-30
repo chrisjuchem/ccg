@@ -13,7 +13,7 @@ use bevy::prelude::*;
 //     }
 // }
 
-pub trait Zones: Send + Sync + Eq {
+pub trait Zones: Send + Sync + Eq + Copy {
     fn all() -> Vec<Self>
     where
         Self: Sized;

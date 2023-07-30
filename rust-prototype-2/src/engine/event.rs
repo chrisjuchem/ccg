@@ -1,11 +1,11 @@
-use crate::engine::ability::Ability;
+use crate::engine::ability::{Ability, Effects};
 use bevy::prelude::*;
 
 use crate::engine::phase::Phase;
 use crate::engine::zone::Zones;
 
 #[derive(SystemSet, Hash, Eq, PartialEq, Debug, Copy, Clone)]
-struct TriggerEvents;
+pub struct TriggerEvents;
 
 pub fn register_events<Z: Zones + 'static>(app: &mut App) {
     register_event::<PhaseStart>(app);
@@ -26,11 +26,13 @@ pub trait FilterableEvent: Event {
 pub fn trigger_abilities<E: FilterableEvent>(
     mut evs: EventReader<E>,
     abilities: Query<&Ability<E::Filter>>,
+    mut effects: ResMut<Effects>,
 ) {
     for ev in evs.iter() {
         for ability in abilities.iter() {
             if ev.matches(&ability.trigger) {
                 println!("Triggered {}!", std::any::type_name::<E>());
+                effects.push(ability.effect.clone())
             }
         }
     }

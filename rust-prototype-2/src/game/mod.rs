@@ -3,6 +3,7 @@ use bevy::prelude::*;
 
 use crate::engine::CcgEnginePlugin;
 
+mod abilities;
 mod init;
 mod print;
 mod zone;
@@ -14,5 +15,6 @@ impl Plugin for GamePlugin {
         app.init_resource::<Phase>();
         app.add_systems(Startup, init::setup);
         app.add_systems(PostUpdate, print::print_game.run_if(print::needs_print));
+        app.add_systems(Startup, abilities::spawn_abilities);
     }
 }

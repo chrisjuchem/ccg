@@ -8,6 +8,7 @@ pub mod action;
 pub mod event;
 pub mod phase;
 pub mod zone;
+use crate::engine::ability::Effects;
 use zone::Zones;
 
 pub struct CcgEnginePlugin<Z: Zones> {
@@ -38,12 +39,13 @@ impl<Z: Zones + 'static> Plugin for CcgEnginePlugin<Z> {
                 .chain()
                 .run_if(resource_exists::<Phase>()),
         );
+        event::register_events::<Z>(app);
+        app.add_systems(Update, ability::resolve_effects.after(event::TriggerEvents));
 
         // app.init_resource::<Phase>();
         app.init_resource::<Priority>();
         app.init_resource::<TurnOrder>();
-        event::register_events::<Z>(app);
-        app.add_systems(Startup, ability::spawn_test_abilities);
+        app.init_resource::<Effects>();
     }
 }
 
