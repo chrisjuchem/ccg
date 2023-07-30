@@ -1133,6 +1133,7 @@ version = "0.1.0"
 dependencies = [
  "aery",
  "bevy",
+ "timeout-readwrite",
 ]
 
 [[package]]
@@ -3089,6 +3090,15 @@ checksum = "3fdd6f064ccff2d6567adcb3873ca630700f00b5ad3f060c25b5dcfd9a4ce152"
 dependencies = [
  "cfg-if",
  "once_cell",
+]
+
+[[package]]
+name = "timeout-readwrite"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "37312ddc0adbd0f112618a4250ac586448151ff6d69241ff061b29b883349f3e"
+dependencies = [
+ "nix 0.26.2",
 ]
 
 [[package]]

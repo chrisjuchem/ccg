@@ -1,6 +1,7 @@
 use crate::engine::phase::Priority;
 use bevy::prelude::*;
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Action {
     PassPriority,
     PlayCard(Entity),
@@ -9,7 +10,7 @@ pub enum Action {
 #[derive(Resource, Deref)]
 pub struct PossibleActions(Vec<Action>); // todo add id to support networking
 #[derive(Resource, Deref)]
-pub struct ChosenAction(usize);
+pub struct ChosenAction(pub usize);
 
 pub fn needs_choices_generated(
     choices: Option<Res<PossibleActions>>,
@@ -27,13 +28,19 @@ pub fn apply_choice(
     actions: Res<PossibleActions>,
     choice: Res<ChosenAction>,
     mut priority: ResMut<Priority>,
+    mut commands: Commands,
 ) {
-    match actions[**choice] {
-        Action::PassPriority => {
-            let current = priority.current.unwrap();
-            priority.passed.insert(current);
-            priority.current = None;
+    if let Some(action) = actions.get(**choice) {
+        match action {
+            Action::PassPriority => {
+                let current = priority.current.unwrap();
+                priority.passed.insert(current);
+                priority.current = None;
+            }
+            _ => {}
         }
-        _ => {}
+    } else {
+        println!("Choice out of bounds, try again.")
     }
+    commands.remove_resource::<ChosenAction>();
 }

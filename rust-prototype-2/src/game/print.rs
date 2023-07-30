@@ -1,3 +1,4 @@
+use crate::engine::action::{ChosenAction, PossibleActions};
 use crate::engine::phase::{ActivePlayer, Phase, Priority};
 use crate::engine::{Card, Player};
 use crate::game::zone::GameZones;
@@ -11,6 +12,7 @@ pub struct PrintArgs<'w, 's> {
     phase: Res<'w, Phase>,
     priority: Res<'w, Priority>,
     active_player: Option<Res<'w, ActivePlayer>>,
+    choices: Option<Res<'w, PossibleActions>>,
 }
 
 pub fn needs_print(args: PrintArgs) -> bool {
@@ -24,6 +26,11 @@ pub fn needs_print(args: PrintArgs) -> bool {
     }) || (args.priority.is_changed() && {
         if debug {
             println!("prio");
+        }
+        true
+    }) || (args.choices.is_some_and(|choices| choices.is_changed()) && {
+        if debug {
+            println!("choices");
         }
         true
     }) || (args.active_player.is_some_and(|ap| ap.is_changed()) && {
@@ -45,12 +52,20 @@ pub fn needs_print(args: PrintArgs) -> bool {
 }
 
 pub fn print_game(args: PrintArgs) {
+    // print!("{esc}[1J{esc}[1;1H", esc = 27 as char); // clear screen
+    // print!("{}[2J", 27 as char); // clear screen
+    // print!("{esc}[2J{esc}[1;1H", esc = 27 as char); // clear screen
+    for _ in 0..10 {
+        println!()
+    }
+
     let PrintArgs {
         players,
         cards,
         phase,
         priority,
         active_player,
+        choices,
     } = args;
 
     let player_name = |e: Entity| -> &str { players.get(e).unwrap().0.into_inner().name.as_str() };
@@ -77,9 +92,32 @@ pub fn print_game(args: PrintArgs) {
     if let Some(plr) = priority.current {
         println!();
         println!("{}, make a choice:", player_name(plr));
+        for (i, choice) in choices.unwrap().iter().enumerate() {
+            println!("{i}. {choice:?}")
+        }
+        println!();
     }
+}
 
-    for _ in 0..20 {
-        println!()
-    }
+use std::io::Read;
+use std::str::FromStr;
+use std::time::Duration;
+use timeout_readwrite::TimeoutReadExt;
+pub fn process_input(mut commands: Commands) {
+    let mut bytes = [0; 10];
+    let _res = std::io::stdin()
+        .with_timeout(Duration::from_millis(5))
+        .read(&mut bytes)
+        .map(|n| {
+            std::str::from_utf8(&bytes[0..n])
+                .map_err(|_| ())
+                .and_then(|n| {
+                    println!("Choice: {:?}", n);
+                    usize::from_str(n.trim()).map_err(|_| ())
+                })
+                .map(|n| {
+                    commands.insert_resource(ChosenAction(n));
+                })
+                .map_err(|_| println!("Bad choice, try again."))
+        });
 }
