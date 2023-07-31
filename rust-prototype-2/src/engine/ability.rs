@@ -1,8 +1,6 @@
-use bevy::ecs::system::BoxedSystem;
 use bevy::prelude::*;
 use std::any::Any;
 use std::fmt::{Debug, Formatter};
-use std::sync::{Arc, Mutex};
 
 #[derive(Component)]
 pub struct Ability<Filter> {
@@ -11,6 +9,8 @@ pub struct Ability<Filter> {
     pub effects: Vec<Box<dyn Effect>>,
 }
 
+/// This is the thing that goes on the whiteboard.
+/// https://magic.wizards.com/en/news/mtg-arena/on-whiteboards-naps-and-living-breakthrough
 pub trait Effect: Send + Sync + Any {
     fn resolver(&self) -> Box<dyn System<In = (), Out = ()>>;
     fn dyn_clone(&self) -> Box<dyn Effect>;
@@ -35,7 +35,7 @@ pub fn modify_effects(modifiers: Query<()>, mut effects: ResMut<Effects>) {
 
 pub fn resolve_effects(world: &mut World) {
     let mut effects = world.remove_resource::<Effects>().unwrap();
-    for mut effect in effects.0.iter_mut() {
+    for effect in effects.0.iter_mut() {
         let mut resolver = effect.resolver();
         resolver.initialize(world);
         resolver.run((), world)

@@ -1,11 +1,9 @@
 use crate::engine::ability::{Ability, Effect};
 use crate::engine::event::{Filter, PhaseEndFilter, PhaseStartFilter};
 use crate::engine::phase::Phase;
-use crate::engine::zone::Zones;
 use crate::engine::{Card, Player};
 use crate::game::zone::GameZones;
 use bevy::prelude::*;
-use bevy::utils::HashMap;
 
 #[derive(Clone, Copy)]
 struct DrawCard {
@@ -40,13 +38,13 @@ pub fn spawn_abilities(mut commands: Commands, players: Query<Entity, With<Playe
         trigger: PhaseStartFilter {
             phase_filter: Filter::Exact(Phase::Setup),
         },
-        effects: dbg!(players
+        effects: players
             .into_iter()
             .map::<Vec<Box<dyn Effect>>, _>(|p| {
                 vec![Box::new(DrawCard { player: p }); STARTING_HAND_SIZE]
             })
             .flatten()
-            .collect()),
+            .collect(),
     });
     commands.spawn(Ability {
         trigger: PhaseEndFilter {
