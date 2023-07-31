@@ -31,8 +31,12 @@ pub fn trigger_abilities<E: FilterableEvent>(
     for ev in evs.iter() {
         for ability in abilities.iter() {
             if ev.matches(&ability.trigger) {
-                println!("Triggered {}!", std::any::type_name::<E>());
-                effects.push(ability.effect.clone())
+                println!(
+                    "Triggered {}! ({})",
+                    std::any::type_name::<E>(),
+                    ability.effects.len()
+                );
+                effects.extend_from_slice(&ability.effects);
             }
         }
     }

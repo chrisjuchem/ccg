@@ -20,6 +20,6 @@ impl Plugin for GamePlugin {
             PostUpdate,
             print::process_input.run_if(resource_exists::<PossibleActions>()),
         );
-        app.add_systems(Startup, abilities::spawn_abilities);
+        app.add_systems(PostStartup, abilities::spawn_abilities);
     }
 }
