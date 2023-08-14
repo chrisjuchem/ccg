@@ -1,3 +1,4 @@
+use bevy::ecs::component::TableStorage;
 use bevy::prelude::*;
 use std::any::Any;
 use std::fmt::{Debug, Formatter};
@@ -28,6 +29,14 @@ impl Debug for dyn Effect {
 
 #[derive(Resource, Deref, DerefMut, Default)]
 pub struct Effects(Vec<Box<dyn Effect>>);
+
+pub trait EffectModifier: Send + Sync {
+    fn would_modify(&self, effect: &mut Box<dyn Effect>) -> bool;
+    fn modify_effect(&self, effect: &mut Box<dyn Effect>);
+}
+impl Component for Box<dyn EffectModifier> {
+    type Storage = TableStorage;
+}
 
 pub fn modify_effects(modifiers: Query<()>, mut effects: ResMut<Effects>) {
     for effect in effects.iter_mut() {}
