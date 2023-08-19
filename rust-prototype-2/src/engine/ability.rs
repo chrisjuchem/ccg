@@ -3,6 +3,16 @@ use bevy::prelude::*;
 use std::any::Any;
 use std::fmt::{Debug, Formatter};
 
+// alternative to dyn:
+//macro_rules! make_enum {
+//     {$($var:tt),* } => { make_enum!{@ $($var $var),* }};
+//     {@ $($var:ident $ty:ty),*} => {
+//         enum E {
+//             $($var($ty)),*
+//         }
+//     };
+// }
+
 #[derive(Component)]
 pub struct Ability<Filter> {
     pub trigger: Filter,

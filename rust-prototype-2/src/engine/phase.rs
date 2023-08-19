@@ -74,7 +74,7 @@ pub fn do_setup(
 ) {
     order.0 = players
         .iter()
-        //.random()
+        //todo: .random()
         .map(|p| {
             commands.insert_resource(ActivePlayer(p));
             p

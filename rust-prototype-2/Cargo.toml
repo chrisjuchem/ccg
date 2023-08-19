@@ -8,6 +8,7 @@ edition = "2021"
 # https://bevyengine.org/learn/book/getting-started/setup/#enable-fast-compiles-optional
 bevy = { version = "0.11", features = ["dynamic_linking"] }
 aery = "0.3"
+dyn-clone = "1.0.11"
 
 # IO only
 timeout-readwrite = "0.3"
